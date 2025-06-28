@@ -82,4 +82,23 @@ todoRouter.put("/todo/:id", userMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
+todoRouter.delete("/delete/:id",userMiddleware, async function (req,res) {
+const todoId = req.params.id;
+if(!todoId){
+  res.json({
+    message:"todo not found"
+  })
+}
+try{
+await todoModel.deleteOne({_id:todoId});
+ res.json({
+      message: "todo deleted",
+    });
+  }catch(err){
+    res.status(500).json({
+      error:err.message
+    })
+  }
+})
 export {todoRouter};

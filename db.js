@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { object } from "zod/v4";
 
 const Schema = mongoose.Schema;
 const ObjectId = Schema.ObjectId;
@@ -16,11 +17,13 @@ const userSchema = new Schema({
 
 
 const todoSchema = new Schema({
+    
     userId:{
         type:ObjectId,
         ref:"user"
     },
     "title":String,
+    description:String,
     status: {
     type: String,
     enum: ["pending", "in-progress", "completed"],
