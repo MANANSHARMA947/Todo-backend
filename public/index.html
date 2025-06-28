@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Todo App</h1>
+
+      <div id="auth">
+        <h2>Signup</h2>
+        <input id="signup-email" placeholder="Email" />
+        <input id="signup-first" placeholder="First Name" />
+        <input id="signup-last" placeholder="Last Name" />
+        <input id="signup-password" type="password" placeholder="Password" />
+        <button onclick="signup()">Sign Up</button>
+
+        <h2>Signin</h2>
+        <input id="signin-email" placeholder="Email" />
+        <input id="signin-password" type="password" placeholder="Password" />
+        <button onclick="signin()">Sign In</button>
+      </div>
+
+      <div id="todo-section" class="hidden">
+        <h2>Create Todo</h2>
+        <input id="todo-title" placeholder="Title" />
+        <input id="todo-description" placeholder="Description" />
+        <select id="todo-status">
+          <option value="pending">Pending</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+        <button onclick="createTodo()">Create Todo</button>
+
+        <h2>Your Todos</h2>
+        <div id="todos"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:3000";
+      let token = "";
+
+      function signup() {
+        fetch(`${API_BASE}/user/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("signup-email").value,
+            firstName: document.getElementById("signup-first").value,
+            lastName: document.getElementById("signup-last").value,
+            password: document.getElementById("signup-password").value,
+          }),
+        })
+          .then((res) => res.json())
+          .then(alertResponse);
+      }
+
+      function signin() {
+        fetch(`${API_BASE}/user/signin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("signin-email").value,
+            password: document.getElementById("signin-password").value,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.token) {
+              token = data.token;
+              document.getElementById("auth").classList.add("hidden");
+              document
+                .getElementById("todo-section")
+                .classList.remove("hidden");
+              getTodos();
+            } else {
+              alert("Login failed");
+            }
+          });
+      }
+
+      function createTodo() {
+        fetch(`${API_BASE}/todo/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            token,
+          },
+          body: JSON.stringify({
+            title: document.getElementById("todo-title").value,
+            description: document.getElementById("todo-description").value,
+            status: document.getElementById("todo-status").value,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message);
+            getTodos();
+          });
+      }
+
+      function getTodos() {
+        fetch(`${API_BASE}/todo/todos`, {
+          headers: { token },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            const todosDiv = document.getElementById("todos");
+            todosDiv.innerHTML = "";
+            data.todos.forEach((todo) => {
+              todosDiv.innerHTML += `
+            <div class="todo">
+              <strong>${todo.title}</strong><br/>
+              <small>${todo.status}</small><br/>
+              ${todo.description}<br/>
+              <div class="actions">
+                <button onclick="deleteTodo('${todo._id}')">Delete</button>
+                <button onclick="editTodo('${todo._id}')">Edit</button>
+              </div>
+            </div>`;
+            });
+          });
+      }
+
+      function deleteTodo(id) {
+        fetch(`${API_BASE}/todo/delete/${id}`, {
+          method: "DELETE",
+          headers: { token },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message);
+            getTodos();
+          });
+      }
+
+      function editTodo(id) {
+        const title = prompt("New title:");
+        const description = prompt("New description:");
+        const status = prompt("New status (pending, in-progress, completed):");
+
+        fetch(`${API_BASE}/todo/todo/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            token,
+          },
+          body: JSON.stringify({ title, description, status }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message);
+            getTodos();
+          });
+      }
+
+      function alertResponse(data) {
+        alert(data.message || JSON.stringify(data));
+      }
+    </script>
+  </body>
+</html>

@@ -6,10 +6,19 @@ const app = express();
 app.use(express.json());
 import { userRouter } from "./routes/user.js";
 import { todoRouter } from "./routes/todo.js";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+app.use(express.static('public'));
 
 import dotenv from "dotenv";
 dotenv.config();
+
+app.get("/", function (req, res) {
+  res.sendFile(__dirname + "/public/index.html");
+});
 
 app.use("/user", userRouter);
 app.use("/todo", todoRouter);
